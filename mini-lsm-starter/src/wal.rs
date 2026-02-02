@@ -16,7 +16,7 @@
 #![allow(dead_code)] // TODO(you): remove this lint after implementing this mod
 
 use anyhow::Result;
-use bytes::Bytes;
+use bytes::{Buf, Bytes};
 use crossbeam_skiplist::SkipMap;
 use parking_lot::Mutex;
 use std::fs::File;
@@ -32,7 +32,9 @@ pub struct Wal {
 
 impl Wal {
     pub fn create(_path: impl AsRef<Path>) -> Result<Self> {
-        unimplemented!()
+        Ok(Wal {
+            file: Arc::new(Mutex::new(BufWriter::new(File::create_new(_path)?))),
+        })
     }
 
     pub fn recover(_path: impl AsRef<Path>, _skiplist: &SkipMap<Bytes, Bytes>) -> Result<Self> {
