@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#![allow(unused_variables)] // TODO(you): remove this lint after implementing this mod
-#![allow(dead_code)] // TODO(you): remove this lint after implementing this mod
+// #![allow(unused_variables)] // TODO(you): remove this lint after implementing this mod
+// #![allow(dead_code)] // TODO(you): remove this lint after implementing this mod
 
 mod builder;
 mod iterator;
 
 pub use builder::BlockBuilder;
-use bytes::Bytes;
+use bytes::{Buf, BufMut, Bytes};
 pub use iterator::BlockIterator;
 
 /// A block is the smallest unit of read and caching in LSM tree. It is a collection of sorted key-value pairs.
@@ -32,11 +32,36 @@ impl Block {
     /// Encode the internal data to the data layout illustrated in the course
     /// Note: You may want to recheck if any of the expected field is missing from your output
     pub fn encode(&self) -> Bytes {
-        unimplemented!()
+        // unimplemented!()
+        // let num_of_elements = self.offsets.len();
+        let mut data = self.data.clone();
+
+        for &off in &self.offsets {
+            data.put_u16(off);
+        }
+        data.put_u16(self.offsets.len() as u16);
+        data.into()
     }
 
     /// Decode from the data layout, transform the input `data` to a single `Block`
     pub fn decode(data: &[u8]) -> Self {
-        unimplemented!()
+        let num_elements_ptr = data.len() - 2;
+        let num_elements = (&data[num_elements_ptr..]).get_u16() as usize;
+
+        let offsets_ptr = num_elements_ptr - num_elements * 2;
+
+        // block.data use u8 as data type, can be converted by to_vec() directly.
+        let kvdata = data[0..offsets_ptr].to_vec();
+
+        // offsets needs transversal
+        let mut offsets = Vec::with_capacity(num_elements);
+        let mut offsets_data = &data[offsets_ptr..num_elements_ptr];
+        while offsets_data.has_remaining() {
+            offsets.push(offsets_data.get_u16());
+        }
+        Self {
+            data: kvdata,
+            offsets: offsets,
+        }
     }
 }

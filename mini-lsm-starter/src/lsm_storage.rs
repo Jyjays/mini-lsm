@@ -330,7 +330,7 @@ impl LsmStorageInner {
             // check again
             cur_size = cur_state.memtable.approximate_size();
             if cur_size >= target_size {
-                let _ = self.force_freeze_memtable(&state_lock)?;
+                self.force_freeze_memtable(&state_lock)?;
             }
         }
         res
@@ -398,7 +398,7 @@ impl LsmStorageInner {
         let state = self.state.read().clone();
         // FusedIterator::new(LsmIterator::new(iter))
 
-        let mut vec = Vec::<Box<MemTableIterator>>::new();
+        let mut vec = Vec::<Box<MemTableIterator>>::with_capacity(state.imm_memtables.len() + 1);
 
         let act_iter = state.memtable.scan(_lower, _upper);
         vec.push(Box::new(act_iter));
