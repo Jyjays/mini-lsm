@@ -91,4 +91,8 @@ impl BlockBuilder {
             offsets: self.offsets,
         }
     }
+
+    pub fn get_size(&self) -> usize {
+        self.data.len()
+    }
 }
